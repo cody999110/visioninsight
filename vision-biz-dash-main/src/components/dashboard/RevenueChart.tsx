@@ -95,7 +95,9 @@ const RevenueChart = () => {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <h3 className="font-display text-base font-semibold text-foreground">收入与毛利趋势</h3>
-          {live && <Badge className="text-[10px]">Campaign</Badge>}
+          {live && currentCompany?.name ? (
+            <Badge variant="secondary" className="text-[10px] truncate max-w-[140px]">{currentCompany.name}</Badge>
+          ) : null}
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {availableYears.map((year) => (

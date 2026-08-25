@@ -25,6 +25,7 @@ def _parse_dt(value: str | None) -> datetime | None:
 
 
 USABLE_STATUSES = {"validated", "active"}
+LISTABLE_STATUSES = {"validated", "active", "pending_confirm"}
 
 
 @dataclass
@@ -36,6 +37,10 @@ class DatasetRecord:
     template_code: str
     status: str
     rows: list[dict[str, Any]] = field(default_factory=list)
+    raw_rows: list[dict[str, Any]] = field(default_factory=list)
+    pending_rows: list[dict[str, Any]] | None = None
+    pending_raw_rows: list[dict[str, Any]] | None = None
+    cleaning_summary: dict[str, Any] | None = None
     errors: list[str] = field(default_factory=list)
     row_count: int = 0
     error_count: int = 0
@@ -52,6 +57,10 @@ class DatasetRecord:
             "template_code": self.template_code,
             "status": self.status,
             "rows": self.rows,
+            "raw_rows": self.raw_rows,
+            "pending_rows": self.pending_rows,
+            "pending_raw_rows": self.pending_raw_rows,
+            "cleaning_summary": self.cleaning_summary,
             "errors": self.errors,
             "row_count": self.row_count,
             "error_count": self.error_count,
@@ -70,6 +79,10 @@ class DatasetRecord:
             template_code=payload["template_code"],
             status=payload["status"],
             rows=payload.get("rows", []),
+            raw_rows=payload.get("raw_rows", []),
+            pending_rows=payload.get("pending_rows"),
+            pending_raw_rows=payload.get("pending_raw_rows"),
+            cleaning_summary=payload.get("cleaning_summary"),
             errors=payload.get("errors", []),
             row_count=payload.get("row_count", 0),
             error_count=payload.get("error_count", 0),
@@ -124,10 +137,18 @@ class DatasetStore:
         return records
 
     def list_companies(self) -> list[dict[str, Any]]:
-        """Group usable datasets by company; keep newest dataset per (company, domain)."""
+        """Group listable datasets by company; keep newest dataset per (company, domain).
+
+        pending_confirm is included only when previously committed rows still exist,
+        so a re-upload waiting for confirm does not make the company disappear.
+        """
         grouped: dict[str, dict[str, Any]] = {}
         for record in self.list_all():  # newest first
-            if record.status not in USABLE_STATUSES or not record.rows:
+            if record.status not in LISTABLE_STATUSES:
+                continue
+            if record.status == "pending_confirm" and not record.rows:
+                continue
+            if record.status in USABLE_STATUSES and not record.rows:
                 continue
             company = grouped.setdefault(
                 record.company,

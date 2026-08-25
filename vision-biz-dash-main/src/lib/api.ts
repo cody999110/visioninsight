@@ -3,8 +3,21 @@ const API_BASE = "/api/v1";
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, init);
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(detail || `Request failed: ${response.status}`);
+    const text = await response.text();
+    let message = text || `Request failed: ${response.status}`;
+    try {
+      const parsed = JSON.parse(text) as { detail?: unknown };
+      if (typeof parsed.detail === "string") {
+        message = parsed.detail;
+      } else if (Array.isArray(parsed.detail)) {
+        message = parsed.detail
+          .map((item) => (typeof item === "object" && item && "msg" in item ? String((item as { msg: unknown }).msg) : String(item)))
+          .join("；");
+      }
+    } catch {
+      // keep raw text
+    }
+    throw new Error(message);
   }
   if (response.status === 204) {
     return undefined as T;
@@ -13,7 +26,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export type Domain = "expense" | "revenue" | "fund";
-export type DatasetStatus = "draft" | "validating" | "validated" | "failed" | "active" | "archived";
+export type DatasetStatus =
+  | "draft"
+  | "validating"
+  | "pending_confirm"
+  | "validated"
+  | "failed"
+  | "active"
+  | "archived";
 
 export interface ImportTemplateSummary {
   code: string;
@@ -81,8 +101,107 @@ export interface UploadResult {
   success_rows: number;
   error_rows: number;
   can_activate: boolean;
+  needs_confirm?: boolean;
   message: string;
   errors: string[];
+  cleaning_summary?: CleaningSummary | null;
+}
+
+export interface ConfirmImportResult {
+  dataset_id: string;
+  status: DatasetStatus;
+  success_rows: number;
+  message: string;
+  cleaning_summary?: CleaningSummary | null;
+}
+
+export type CleaningField =
+  | "entity_name"
+  | "business_line"
+  | "department_name"
+  | "expense_category"
+  | "expense_subject"
+  | "customer_name"
+  | "product_name"
+  | "region"
+  | "province"
+  | "business_source";
+
+export interface DimensionMapping {
+  field: CleaningField;
+  source: string;
+  target: string;
+}
+
+export interface CleaningConfig {
+  company: string;
+  mappings: DimensionMapping[];
+  trim_text: boolean;
+  normalize_dates: boolean;
+  normalize_numbers: boolean;
+  drop_empty_rows: boolean;
+  updated_at: string | null;
+}
+
+export interface CleaningConfigUpdate {
+  mappings: DimensionMapping[];
+  trim_text: boolean;
+  normalize_dates: boolean;
+  normalize_numbers: boolean;
+  drop_empty_rows: boolean;
+}
+
+export interface FieldChangeSummary {
+  field: string;
+  before: string;
+  after: string;
+  count: number;
+}
+
+export interface RowFieldDiff {
+  field: string;
+  before: unknown;
+  after: unknown;
+}
+
+export interface RowDiff {
+  row_no: number;
+  changes: RowFieldDiff[];
+}
+
+export interface CleaningSummary {
+  total_rows: number;
+  success_rows: number;
+  error_rows: number;
+  mapped_cells: number;
+  changed_rows: number;
+  unchanged_rows: number;
+  unmapped_values: Record<string, string[]>;
+  field_changes: FieldChangeSummary[];
+  sample_diffs: RowDiff[];
+  warnings: string[];
+}
+
+export interface CleaningPreviewResponse {
+  dataset_id: string;
+  company: string;
+  domain: Domain;
+  status: DatasetStatus;
+  summary: CleaningSummary;
+  columns: DatasetColumn[];
+  raw_preview: Record<string, unknown>[];
+  cleaned_preview: Record<string, unknown>[];
+  errors: string[];
+}
+
+export interface CleaningDistincts {
+  company: string;
+  fields: Record<string, string[]>;
+}
+
+export interface CleaningFieldsResponse {
+  fields: CleaningField[];
+  labels: Record<string, string>;
 }
 
 export interface DataFreshnessResponse {
@@ -287,12 +406,32 @@ export const api = {
     });
   },
 
-  uploadDataset(datasetId: string, file: File) {
+  uploadDataset(datasetId: string, file: File, autoConfirm = false) {
     const formData = new FormData();
     formData.append("file", file);
-    return request<UploadResult>(`/import/datasets/${datasetId}/upload`, {
+    const query = autoConfirm ? "?auto_confirm=true" : "?auto_confirm=false";
+    return request<UploadResult>(`/import/datasets/${datasetId}/upload${query}`, {
       method: "POST",
       body: formData,
+    });
+  },
+
+  getCleaningPreview(datasetId: string, previewLimit = 30) {
+    return request<CleaningPreviewResponse>(
+      `/import/datasets/${datasetId}/cleaning-preview?preview_limit=${previewLimit}`,
+    );
+  },
+
+  confirmDataset(datasetId: string) {
+    return request<ConfirmImportResult>(`/import/datasets/${datasetId}/confirm`, {
+      method: "POST",
+    });
+  },
+
+  reapplyCleaning(datasetId: string, autoConfirm = false) {
+    const query = autoConfirm ? "?auto_confirm=true" : "?auto_confirm=false";
+    return request<UploadResult>(`/import/datasets/${datasetId}/reapply-cleaning${query}`, {
+      method: "POST",
     });
   },
 
@@ -301,6 +440,26 @@ export const api = {
       `/import/datasets/${datasetId}/activate`,
       { method: "POST" },
     );
+  },
+
+  getCleaningConfig(company: string) {
+    return request<CleaningConfig>(`/cleaning/config?company=${encodeURIComponent(company)}`);
+  },
+
+  saveCleaningConfig(company: string, payload: CleaningConfigUpdate) {
+    return request<CleaningConfig>(`/cleaning/config?company=${encodeURIComponent(company)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getCleaningDistincts(company: string) {
+    return request<CleaningDistincts>(`/cleaning/distincts?company=${encodeURIComponent(company)}`);
+  },
+
+  getCleaningFields() {
+    return request<CleaningFieldsResponse>("/cleaning/fields");
   },
 
   getDataFreshness(datasetId?: string) {

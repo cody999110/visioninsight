@@ -1,6 +1,6 @@
 // Mock data for revenue/cost/margin query platform
 
-export const revenueEntities = ["集团", "爱芯元智（上海）", "爱芯元智（深圳）", "爱芯元智（北京）"];
+export const revenueEntities = ["集团", "华东主体", "华南主体", "华北主体"];
 export const businessLines = ["智能安防", "智能驾驶", "AIoT", "芯片IP授权", "技术服务"];
 export const revenueCurrencies = ["本位币", "集团币", "USD"];
 export const regions = ["华东", "华南", "华北", "华中", "西南", "西北", "东北", "海外"];

@@ -27,7 +27,7 @@ def test_create_upload_and_company_view_revenue() -> None:
 
     csv_content = (SAMPLES / "sample_revenue.csv").read_bytes()
     upload_resp = client.post(
-        f"/api/v1/import/datasets/{dataset_id}/upload",
+        f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
         files={"file": ("sample_revenue.csv", BytesIO(csv_content), "text/csv")},
     )
     assert upload_resp.status_code == 200
@@ -71,7 +71,7 @@ def test_download_and_reupload_dataset() -> None:
 
     csv_content = (SAMPLES / "sample_revenue.csv").read_bytes()
     upload_resp = client.post(
-        f"/api/v1/import/datasets/{dataset_id}/upload",
+        f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
         files={"file": ("sample_revenue.csv", BytesIO(csv_content), "text/csv")},
     )
     assert upload_resp.status_code == 200
@@ -95,7 +95,7 @@ def test_download_and_reupload_dataset() -> None:
 
     edited = body.replace("豪威集团", "豪威集团-修订", 1).encode("utf-8-sig")
     reupload_resp = client.post(
-        f"/api/v1/import/datasets/{dataset_id}/upload",
+        f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
         files={"file": ("edited.csv", BytesIO(edited), "text/csv")},
     )
     assert reupload_resp.status_code == 200
@@ -154,7 +154,7 @@ def test_campaign_dimensions_are_not_globally_enumerated() -> None:
             dataset_id = create_resp.json()["id"]
             created.append(dataset_id)
             upload_resp = client.post(
-                f"/api/v1/import/datasets/{dataset_id}/upload",
+                f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
                 files={"file": (filename, BytesIO(content), "text/csv")},
             )
             assert upload_resp.status_code == 200, upload_resp.text
@@ -165,3 +165,45 @@ def test_campaign_dimensions_are_not_globally_enumerated() -> None:
     finally:
         for dataset_id in created:
             dataset_store.delete(dataset_id)
+
+
+def test_failed_reupload_keeps_previous_company_data() -> None:
+    create_resp = client.post(
+        "/api/v1/import/datasets",
+        json={
+            "name": "保留测试 · 收入成本",
+            "company": "保留测试公司",
+            "domain": "revenue",
+            "template_code": "tpl_revenue_cost_detail",
+        },
+    )
+    assert create_resp.status_code == 200
+    dataset_id = create_resp.json()["id"]
+    try:
+        csv_content = (SAMPLES / "sample_revenue.csv").read_bytes()
+        ok = client.post(
+            f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
+            files={"file": ("sample_revenue.csv", BytesIO(csv_content), "text/csv")},
+        )
+        assert ok.status_code == 200
+        assert ok.json()["can_activate"] is True
+
+        companies = client.get("/api/v1/import/datasets/companies").json()["items"]
+        assert any(item["name"] == "保留测试公司" for item in companies)
+
+        expense = (SAMPLES / "sample_expense.csv").read_bytes()
+        bad = client.post(
+            f"/api/v1/import/datasets/{dataset_id}/upload",
+            files={"file": ("sample_expense.csv", BytesIO(expense), "text/csv")},
+        )
+        assert bad.status_code == 400
+        assert "缺少" in bad.json()["detail"]
+
+        detail = client.get(f"/api/v1/import/datasets/{dataset_id}").json()
+        assert detail["status"] == "validated"
+        assert detail["row_count"] > 0
+
+        companies2 = client.get("/api/v1/import/datasets/companies").json()["items"]
+        assert any(item["name"] == "保留测试公司" for item in companies2)
+    finally:
+        dataset_store.delete(dataset_id)

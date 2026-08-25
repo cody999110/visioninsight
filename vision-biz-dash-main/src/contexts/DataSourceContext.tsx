@@ -43,10 +43,11 @@ export function DataSourceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (selectedView === DEMO_VIEW) return;
+    if (isLoading) return;
     if (!companies.some(company => company.name === selectedView)) {
       setSelectedView(DEMO_VIEW);
     }
-  }, [companies, selectedView]);
+  }, [companies, selectedView, isLoading]);
 
   const currentCompany = useMemo(
     () => (selectedView === DEMO_VIEW ? null : companies.find(c => c.name === selectedView) ?? null),

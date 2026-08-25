@@ -37,7 +37,7 @@ const DashboardHeader = () => {
         </div>
         <div className="min-w-0">
           <h1 className="font-display text-lg font-semibold text-foreground tracking-tight leading-none">
-            财务数据看板
+            VisionInsight
           </h1>
           <CompanySwitcher className="mt-1" />
         </div>
@@ -48,7 +48,7 @@ const DashboardHeader = () => {
           <Calendar className="w-3.5 h-3.5" />
           <span>{freshness?.label ?? "—"}</span>
           <span className="text-border">·</span>
-          <span>{isDemo ? "演示" : "Campaign"}</span>
+          <span>{isDemo ? "演示数据" : (currentCompany?.name ?? "已上传数据")}</span>
         </div>
         <WorkspaceMenu />
       </div>

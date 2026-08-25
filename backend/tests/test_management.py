@@ -28,7 +28,7 @@ def _upload(domain: str, template_code: str, sample_name: str) -> str:
     dataset_id = create_resp.json()["id"]
     csv_content = (SAMPLES / sample_name).read_bytes()
     upload_resp = client.post(
-        f"/api/v1/import/datasets/{dataset_id}/upload",
+        f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
         files={"file": (sample_name, BytesIO(csv_content), "text/csv")},
     )
     assert upload_resp.status_code == 200

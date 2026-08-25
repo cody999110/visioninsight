@@ -1,26 +1,40 @@
-# Axera Dashboard 一键启动
+# VisionInsight 一键启动
+
+开源经营与财务 BI：按公司上传数据、清洗映射、看板洞察与自助查询。
 
 ## 一键启动（Windows）
 
-在项目根目录执行：
+**不要双击** `start.ps1`（窗口容易一闪而过，且旧版 Windows PowerShell 对无 BOM 的 UTF-8 脚本易报错）。
+
+在项目根目录打开 **PowerShell** 或 **终端**，执行：
 
 ```powershell
-.\start.ps1
+cd "d:\工作文档\编程\axera_dashboard"
+powershell -ExecutionPolicy Bypass -File .\start.ps1
 ```
 
-会自动：
-1. 创建/使用 Python 虚拟环境并安装后端依赖
-2. 安装前端依赖（首次）
-3. 启动后端 `http://127.0.0.1:8000`
-4. 启动前端 `http://127.0.0.1:8080`
+会自动打开两个窗口：
+1. 后端 `http://127.0.0.1:8000`（文档 `/docs`）
+2. 前端 `http://127.0.0.1:8080`
+
+看到前端窗口出现 `Local: http://localhost:8080/` 后，用浏览器打开即可。
 
 ## 使用 Campaign 上传数据
 
 1. 打开前端看板 http://127.0.0.1:8080
 2. 右上角切换「数据视图」：演示数据 / 已上传公司
-3. 点击 **Campaign 数据** 或空态卡片上的「下载模板 / 上传数据」
+3. 点击 **功能 → Campaign 数据** 或空态卡片上的「下载模板 / 上传数据」
 4. 填写公司名称 → 选择数据域 → 下载模板 → 上传 CSV
-5. 上传成功后顶部自动切换到该公司；未上传的数据域显示空态
+5. 上传后进入**清洗预览**：核对映射变更，确认后才入库
+6. 确认成功后顶部自动切换到该公司；未上传的数据域显示空态
+
+## 数据清洗（按公司）
+
+1. **功能 → 数据清洗**，切换到目标公司
+2. 配置维度映射（如「集团」→「集团总部」、业务线/科目别名统一）
+3. 保存后，之后上传会自动套用；也可对已入库数据点「重新清洗」
+
+结构规范化（日期/数值/去空格/空行）在上传时自动执行；业务映射类似 Power Query 的「替换值」。原始行会保留在 `raw_rows`，便于回溯。
 
 ## 示例 CSV
 
@@ -56,6 +70,8 @@ npm run dev
 | 路径 | 说明 |
 |------|------|
 | `backend/storage/datasets/*.json` | 本地上传的 Campaign 真实数据 |
+| `backend/storage/cleaning_configs/*.json` | 各公司清洗映射配置 |
+| `backend/storage/mgmt_configs/*.json` | 各公司管理报表配置 |
 | `backend/.env` | 本地环境变量 |
 | `backend/.venv/` | Python 虚拟环境 |
 | `vision-biz-dash-main/node_modules/` | 前端依赖 |

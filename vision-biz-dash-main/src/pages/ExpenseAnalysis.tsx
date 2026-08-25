@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Download, Save, Link2, BookmarkPlus, Search,
   ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp,
@@ -27,10 +28,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  entities, currencies, expenseRanges, expenseSubjects,
+  entities as mockEntities, currencies, expenseRanges as mockExpenseRanges, expenseSubjects as mockExpenseSubjects,
   departments, salesPersons, customers, projects, suppliers,
   generateDetailRows,
 } from "@/data/expenseMockData";
+import { api } from "@/lib/api";
+import { useDataSource } from "@/contexts/DataSourceContext";
+import {
+  filterExpenseRows,
+  groupExpenseLiveRows,
+  mapExpenseLiveRows,
+  toExpenseDetailView,
+  uniqueSorted,
+} from "@/lib/liveQuery";
 
 // ── Reusable MultiSelect ──
 const MultiSelect = ({
@@ -128,7 +138,7 @@ function generateGroupedData(groupBy: string[], metrics: string[]) {
     "客户": customers,
     "项目": projects,
     "供应商": suppliers,
-    "费用科目": expenseSubjects,
+    "费用科目": mockExpenseSubjects,
     "成本中心": ["CC-100", "CC-200", "CC-300", "CC-400", "CC-500"],
     "月份": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"],
   };
@@ -187,14 +197,56 @@ LIMIT 500;`;
 // ── Main Component ──
 const ExpenseAnalysis = () => {
   const navigate = useNavigate();
+  const { isDemo, datasetFor, currentCompany } = useDataSource();
+  const datasetId = datasetFor("expense");
+
+  const { data: liveDataset } = useQuery({
+    queryKey: ["analysis-expense-rows", datasetId],
+    queryFn: () => api.getDataset(datasetId!, 5000),
+    enabled: Boolean(datasetId) && !isDemo,
+  });
+
+  const liveRows = useMemo(
+    () => (liveDataset?.preview_rows?.length ? mapExpenseLiveRows(liveDataset.preview_rows as Record<string, unknown>[]) : null),
+    [liveDataset],
+  );
+  const usingLive = Boolean(liveRows?.length);
+
+  const entityOptions = useMemo(() => {
+    if (!usingLive || !liveRows) return mockEntities;
+    return ["全部", ...uniqueSorted(liveRows.map(row => row.entity))];
+  }, [usingLive, liveRows]);
+  const rangeOptions = useMemo(() => {
+    if (!usingLive || !liveRows) return mockExpenseRanges;
+    return uniqueSorted(liveRows.map(row => row.category));
+  }, [usingLive, liveRows]);
+  const subjectOptions = useMemo(() => {
+    if (!usingLive || !liveRows) return mockExpenseSubjects;
+    return uniqueSorted(liveRows.map(row => row.subject));
+  }, [usingLive, liveRows]);
 
   // Filter states
   const [entity, setEntity] = useState("集团");
   const [currency, setCurrency] = useState("本位币");
-  const [selectedRanges, setSelectedRanges] = useState(["销售费用", "管理费用", "研发费用"]);
+  const [selectedRanges, setSelectedRanges] = useState<string[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [periodStart, setPeriodStart] = useState("2024-07");
   const [periodEnd, setPeriodEnd] = useState("2025-06");
+
+  useEffect(() => {
+    if (!usingLive || !liveRows) {
+      setEntity("集团");
+      setSelectedRanges(["销售费用", "管理费用", "研发费用"]);
+      return;
+    }
+    setEntity(entityOptions[0] ?? "全部");
+    setSelectedRanges(rangeOptions);
+    const months = uniqueSorted(liveRows.map(row => row.date.slice(0, 7)).filter(Boolean));
+    if (months.length) {
+      setPeriodStart(months[0]);
+      setPeriodEnd(months[months.length - 1]);
+    }
+  }, [usingLive, liveRows, entityOptions, rangeOptions]);
 
   // Query builder states
   const [groupBy, setGroupBy] = useState<string[]>(["部门", "费用科目"]);
@@ -218,11 +270,26 @@ const ExpenseAnalysis = () => {
   const [drawerRow, setDrawerRow] = useState<any>(null);
 
   // Data
-  const detailRows = useMemo(() => generateDetailRows(80), [entity]);
-  const groupedData = useMemo(
-    () => generateGroupedData(groupBy, selectedMetrics),
-    [groupBy, selectedMetrics, entity]
-  );
+  const filteredLive = useMemo(() => {
+    if (!usingLive || !liveRows) return [];
+    return filterExpenseRows(liveRows, {
+      entity,
+      categories: selectedRanges,
+      subjects: selectedSubjects,
+      periodStart,
+      periodEnd,
+    });
+  }, [usingLive, liveRows, entity, selectedRanges, selectedSubjects, periodStart, periodEnd]);
+
+  const detailRows = useMemo(() => {
+    if (usingLive) return toExpenseDetailView(filteredLive);
+    return generateDetailRows(80);
+  }, [usingLive, filteredLive, entity]);
+
+  const groupedData = useMemo(() => {
+    if (usingLive) return groupExpenseLiveRows(filteredLive, groupBy, selectedMetrics);
+    return generateGroupedData(groupBy, selectedMetrics);
+  }, [usingLive, filteredLive, groupBy, selectedMetrics, entity]);
 
   const isDetail = granularity === "明细数据";
   const isBoth = granularity === "汇总+明细";
@@ -276,16 +343,22 @@ const ExpenseAnalysis = () => {
   );
 
   const handleQuery = () => {
+    if (!isDemo && !usingLive) {
+      toast.error("当前公司尚未入库费用数据，请先在 Campaign 上传费用 CSV");
+      return;
+    }
     setHasQueried(true);
     setTablePage(1);
     setQueryTime(new Date().toLocaleString("zh-CN"));
-    toast.success("查询完成", { description: `共返回 ${currentData.length} 条数据` });
+    toast.success("查询完成", {
+      description: usingLive
+        ? `「${currentCompany?.name ?? "当前公司"}」共返回 ${currentData.length} 条`
+        : `演示数据共返回 ${currentData.length} 条`,
+    });
   };
 
   const handleReset = () => {
-    setEntity("集团");
     setCurrency("本位币");
-    setSelectedRanges(["销售费用", "管理费用", "研发费用"]);
     setSelectedSubjects([]);
     setGroupBy(["部门", "费用科目"]);
     setSelectedMetrics(["费用发生额", "费用率", "同比"]);
@@ -294,6 +367,20 @@ const ExpenseAnalysis = () => {
     setTableSearch("");
     setHiddenCols([]);
     setSortKey(null);
+    if (usingLive && liveRows) {
+      setEntity(entityOptions[0] ?? "全部");
+      setSelectedRanges(rangeOptions);
+      const months = uniqueSorted(liveRows.map(row => row.date.slice(0, 7)).filter(Boolean));
+      if (months.length) {
+        setPeriodStart(months[0]);
+        setPeriodEnd(months[months.length - 1]);
+      }
+    } else {
+      setEntity("集团");
+      setSelectedRanges(["销售费用", "管理费用", "研发费用"]);
+      setPeriodStart("2024-07");
+      setPeriodEnd("2025-06");
+    }
   };
 
   const handleSort = (key: string) => {
@@ -321,8 +408,17 @@ const ExpenseAnalysis = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="font-display text-lg font-bold text-foreground">费用数据自助查询平台</h1>
-              <p className="text-xs text-muted-foreground">Query Builder · 结构化数据查询与导出</p>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display text-lg font-bold text-foreground">费用数据自助查询平台</h1>
+                <Badge variant="secondary" className="text-[10px]">
+                  {usingLive ? (currentCompany?.name ?? "已上传数据") : "演示数据"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {usingLive
+                  ? `基于「${currentCompany?.name ?? "当前公司"}」已入库费用数据查询`
+                  : "Query Builder · 结构化数据查询与导出（演示）"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -351,7 +447,7 @@ const ExpenseAnalysis = () => {
               <FileSpreadsheet className="w-3.5 h-3.5" /> 导出Excel
             </Button>
             <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
-              navigator.clipboard?.writeText("https://bi.axera.com/query/q=abc123");
+              navigator.clipboard?.writeText("https://example.com/vision-insight/query/q=demo");
               toast.success("查询链接已复制");
             }}>
               <Link2 className="w-3.5 h-3.5" /> 复制链接
@@ -375,14 +471,14 @@ const ExpenseAnalysis = () => {
               </div>
               <Select value={entity} onValueChange={setEntity}>
                 <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>{entities.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+                <SelectContent>{entityOptions.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger className="w-[100px] h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>{currencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
-              <MultiSelect options={expenseRanges} selected={selectedRanges} onChange={setSelectedRanges} placeholder="费用范围" />
-              <MultiSelect options={expenseSubjects} selected={selectedSubjects} onChange={setSelectedSubjects} placeholder="费用科目" searchable />
+              <MultiSelect options={rangeOptions} selected={selectedRanges} onChange={setSelectedRanges} placeholder="费用范围" />
+              <MultiSelect options={subjectOptions} selected={selectedSubjects} onChange={setSelectedSubjects} placeholder="费用科目" searchable />
             </div>
           </div>
 

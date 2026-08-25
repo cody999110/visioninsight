@@ -13,3 +13,7 @@ storage/datasets/active.json
 # Per-company management report configs (local only)
 storage/mgmt_configs/*.json
 !storage/mgmt_configs/.gitkeep
+
+# Per-company data cleaning configs (local only)
+storage/cleaning_configs/*.json
+!storage/cleaning_configs/.gitkeep

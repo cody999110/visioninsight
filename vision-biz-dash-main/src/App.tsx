@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import ExpenseAnalysis from "./pages/ExpenseAnalysis";
 import RevenueAnalysis from "./pages/RevenueAnalysis";
 import FundAnalysis from "./pages/FundAnalysis";
+import CleaningConfig from "./pages/CleaningConfig";
 import ManagementConfig from "./pages/ManagementConfig";
 import ManagementReport from "./pages/ManagementReport";
 import ManagementCharts from "./pages/ManagementCharts";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/expense-analysis" element={<ExpenseAnalysis />} />
             <Route path="/revenue-analysis" element={<RevenueAnalysis />} />
             <Route path="/fund-analysis" element={<FundAnalysis />} />
+            <Route path="/cleaning/config" element={<CleaningConfig />} />
             <Route path="/management/config" element={<ManagementConfig />} />
             <Route path="/management/report" element={<ManagementReport />} />
             <Route path="/management/charts" element={<ManagementCharts />} />

@@ -42,7 +42,9 @@ const TopCustomers = () => {
     >
       <div className="flex items-center gap-2 mb-4">
         <h3 className="font-display text-base font-semibold text-foreground">前五大客户</h3>
-        {live && <Badge className="text-[10px]">Campaign</Badge>}
+          {live && currentCompany?.name ? (
+            <Badge variant="secondary" className="text-[10px] truncate max-w-[140px]">{currentCompany.name}</Badge>
+          ) : null}
       </div>
       <div className="space-y-3">
         {customers.map((customer, index) => (

@@ -25,6 +25,9 @@ backend/storage/datasets/active.json
 # Per-company management report configs
 backend/storage/mgmt_configs/*.json
 
+# Per-company data cleaning configs
+backend/storage/cleaning_configs/*.json
+
 # Logs & OS
 *.log
 .DS_Store

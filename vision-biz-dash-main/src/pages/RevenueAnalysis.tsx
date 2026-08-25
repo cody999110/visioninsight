@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Download, Save, Link2, BookmarkPlus, Search,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
@@ -31,6 +32,15 @@ import {
   revenueCustomers, revenueTypes, revenueDimensions, revenueMetrics,
   generateRevenueGroupedData, generateRevenueDetailRows, generateRevenueMockSQL,
 } from "@/data/revenueMockData";
+import { api } from "@/lib/api";
+import { useDataSource } from "@/contexts/DataSourceContext";
+import {
+  filterRevenueRows,
+  groupRevenueLiveRows,
+  mapRevenueLiveRows,
+  toRevenueDetailView,
+  uniqueSorted,
+} from "@/lib/liveQuery";
 
 // ── MultiSelect ──
 const MultiSelect = ({
@@ -113,6 +123,20 @@ const detailColumns = [
 
 const RevenueAnalysis = () => {
   const navigate = useNavigate();
+  const { isDemo, datasetFor, currentCompany } = useDataSource();
+  const datasetId = datasetFor("revenue");
+
+  const { data: liveDataset } = useQuery({
+    queryKey: ["analysis-revenue-rows", datasetId],
+    queryFn: () => api.getDataset(datasetId!, 5000),
+    enabled: Boolean(datasetId) && !isDemo,
+  });
+
+  const liveRows = useMemo(
+    () => (liveDataset?.preview_rows?.length ? mapRevenueLiveRows(liveDataset.preview_rows as Record<string, unknown>[]) : null),
+    [liveDataset],
+  );
+  const usingLive = Boolean(liveRows?.length);
 
   // Filters
   const [entity, setEntity] = useState("集团");
@@ -123,6 +147,23 @@ const RevenueAnalysis = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["收入", "成本"]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+
+  const entityOptions = useMemo(() => {
+    if (!usingLive || !liveRows) return revenueEntities;
+    return ["全部", ...uniqueSorted(liveRows.map(row => row.entity))];
+  }, [usingLive, liveRows]);
+
+  useEffect(() => {
+    if (!usingLive || !liveRows) return;
+    setEntity(entityOptions[0] ?? "全部");
+    setSelectedBL(uniqueSorted(liveRows.map(row => row.businessLine)));
+    setSelectedTypes(uniqueSorted(liveRows.map(row => row.revenueType)));
+    const months = uniqueSorted(liveRows.map(row => row.date.slice(0, 7)).filter(Boolean));
+    if (months.length) {
+      setPeriodStart(months[0]);
+      setPeriodEnd(months[months.length - 1]);
+    }
+  }, [usingLive, liveRows, entityOptions]);
 
   // Query builder
   const [dimensions, setDimensions] = useState<string[]>(["客户名称", "品名"]);
@@ -143,11 +184,28 @@ const RevenueAnalysis = () => {
   const [colSettingsOpen, setColSettingsOpen] = useState(false);
   const [drawerRow, setDrawerRow] = useState<any>(null);
 
-  const detailRows = useMemo(() => generateRevenueDetailRows(100), [entity]);
-  const groupedData = useMemo(
-    () => generateRevenueGroupedData(dimensions, selectedMetrics),
-    [dimensions, selectedMetrics, entity]
-  );
+  const filteredLive = useMemo(() => {
+    if (!usingLive || !liveRows) return [];
+    return filterRevenueRows(liveRows, {
+      entity,
+      businessLines: selectedBL,
+      types: selectedTypes,
+      regions: selectedRegions,
+      customers: selectedCustomers,
+      periodStart,
+      periodEnd,
+    });
+  }, [usingLive, liveRows, entity, selectedBL, selectedTypes, selectedRegions, selectedCustomers, periodStart, periodEnd]);
+
+  const detailRows = useMemo(() => {
+    if (usingLive) return toRevenueDetailView(filteredLive);
+    return generateRevenueDetailRows(100);
+  }, [usingLive, filteredLive, entity]);
+
+  const groupedData = useMemo(() => {
+    if (usingLive) return groupRevenueLiveRows(filteredLive, dimensions, selectedMetrics);
+    return generateRevenueGroupedData(dimensions, selectedMetrics);
+  }, [usingLive, filteredLive, dimensions, selectedMetrics, entity]);
 
   const isDetail = granularity === "明细数据";
   const isBoth = granularity === "汇总+明细";
@@ -196,10 +254,18 @@ const RevenueAnalysis = () => {
   );
 
   const handleQuery = () => {
+    if (!isDemo && !usingLive) {
+      toast.error("当前公司尚未入库收入成本数据，请先在 Campaign 上传");
+      return;
+    }
     setHasQueried(true);
     setTablePage(1);
     setQueryTime(new Date().toLocaleString("zh-CN"));
-    toast.success("查询完成", { description: `共返回 ${currentData.length} 条数据` });
+    toast.success("查询完成", {
+      description: usingLive
+        ? `「${currentCompany?.name ?? "当前公司"}」共返回 ${currentData.length} 条`
+        : `演示数据共返回 ${currentData.length} 条`,
+    });
   };
 
   const handleReset = () => {
@@ -243,8 +309,17 @@ const RevenueAnalysis = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="font-display text-lg font-bold text-foreground">产品收入成本毛利查询平台</h1>
-              <p className="text-xs text-muted-foreground">Query Builder · 收入/成本/毛利结构化数据查询与导出</p>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display text-lg font-bold text-foreground">产品收入成本毛利查询平台</h1>
+                <Badge variant="secondary" className="text-[10px]">
+                  {usingLive ? (currentCompany?.name ?? "已上传数据") : "演示数据"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {usingLive
+                  ? `基于「${currentCompany?.name ?? "当前公司"}」已入库收入成本数据查询`
+                  : "Query Builder · 收入/成本/毛利结构化数据查询与导出（演示）"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -273,7 +348,7 @@ const RevenueAnalysis = () => {
               <FileSpreadsheet className="w-3.5 h-3.5" /> 导出Excel
             </Button>
             <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
-              navigator.clipboard?.writeText("https://bi.axera.com/revenue-query/q=rev001");
+              navigator.clipboard?.writeText("https://example.com/vision-insight/revenue-query/q=demo");
               toast.success("查询链接已复制");
             }}>
               <Link2 className="w-3.5 h-3.5" /> 复制链接
@@ -297,7 +372,7 @@ const RevenueAnalysis = () => {
               </div>
               <Select value={entity} onValueChange={setEntity}>
                 <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>{revenueEntities.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+                <SelectContent>{entityOptions.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger className="w-[100px] h-8 text-xs"><SelectValue /></SelectTrigger>

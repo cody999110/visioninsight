@@ -1,6 +1,6 @@
 // Expense Analysis BI Mock Data
 
-export const entities = ["集团", "爱芯元智（上海）", "爱芯元智（深圳）", "爱芯元智（北京）"];
+export const entities = ["集团", "华东主体", "华南主体", "华北主体"];
 export const currencies = ["本位币", "集团币"];
 export const expenseRanges = ["销售费用", "管理费用", "研发费用", "制造费用"];
 export const expenseSubjects = [

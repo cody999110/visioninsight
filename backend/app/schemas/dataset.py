@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-DatasetStatus = Literal["draft", "validating", "validated", "failed", "active", "archived"]
+from app.schemas.cleaning import CleaningSummary
+
+
+DatasetStatus = Literal[
+    "draft",
+    "validating",
+    "pending_confirm",
+    "validated",
+    "failed",
+    "active",
+    "archived",
+]
 Domain = Literal["expense", "revenue", "fund"]
 
 
@@ -71,8 +82,18 @@ class UploadResult(BaseModel):
     success_rows: int
     error_rows: int
     can_activate: bool
+    needs_confirm: bool = False
     message: str
     errors: list[str] = Field(default_factory=list)
+    cleaning_summary: CleaningSummary | None = None
+
+
+class ConfirmImportResult(BaseModel):
+    dataset_id: str
+    status: DatasetStatus
+    success_rows: int
+    message: str
+    cleaning_summary: CleaningSummary | None = None
 
 
 class ActivateResult(BaseModel):

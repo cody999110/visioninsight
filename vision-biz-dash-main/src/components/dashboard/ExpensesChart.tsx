@@ -1,9 +1,9 @@
+import { operatingExpenses as mockOperatingExpenses } from "@/data/mockData";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { operatingExpenses as mockOperatingExpenses } from "@/data/mockData";
 import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,7 @@ const ExpensesChart = () => {
     );
   }
 
+  // API + mock amounts are both in 万元.
   const dataForYear = liveData ?? mockOperatingExpenses[selectedYear];
   const total = dataForYear.reduce((sum, item) => sum + item.amount, 0);
 
@@ -51,11 +52,15 @@ const ExpensesChart = () => {
       onClick={() => navigate("/expense-analysis")}
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="font-display text-base font-semibold text-foreground">运营费用结构</h3>
-          {liveData && <Badge className="text-[10px]">Campaign</Badge>}
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="font-display text-base font-semibold text-foreground shrink-0">运营费用结构</h3>
+          {liveData && currentCompany?.name ? (
+            <Badge variant="secondary" className="text-[10px] truncate max-w-[140px]">
+              {currentCompany.name}
+            </Badge>
+          ) : null}
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 shrink-0">
           {(["2024", "2025"] as const).map((year) => (
             <button
               key={year}
@@ -77,9 +82,9 @@ const ExpensesChart = () => {
                   <Cell key={index} fill={entry.color} opacity={0.9} stroke="none" />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [`¥${value.toLocaleString()}万`, "金额"]} />
+              <Tooltip formatter={(value: number) => [`¥${Number(value).toLocaleString()}万`, "金额"]} />
               <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central" fill="hsl(240, 10%, 15%)" fontSize={14} fontWeight={700}>
-                ¥{(total / 10000).toFixed(1)}万
+                ¥{total.toFixed(1)}万
               </text>
               <text x="50%" y="60%" textAnchor="middle" dominantBaseline="central" fill="hsl(240, 6%, 45%)" fontSize={10}>
                 总费用

@@ -10,7 +10,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         debug=settings.debug,
         version="0.1.0",
-        description="爱芯元智财务 BI 看板后端 API",
+        description="VisionInsight — 开源经营与财务 BI 后端 API",
     )
 
     app.add_middleware(

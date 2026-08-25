@@ -44,7 +44,9 @@ const ProductMarginChart = () => {
     >
       <div className="flex items-center gap-2 mb-4">
         <h3 className="font-display text-base font-semibold text-foreground">核心产品毛利率</h3>
-        {live && <Badge className="text-[10px]">Campaign</Badge>}
+        {live && currentCompany?.name ? (
+          <Badge variant="secondary" className="text-[10px] truncate max-w-[140px]">{currentCompany.name}</Badge>
+        ) : null}
       </div>
       <div className="chart-container h-[260px]">
         <ResponsiveContainer width="100%" height="100%">

@@ -3,9 +3,11 @@ from __future__ import annotations
 import csv
 import io
 import uuid
-from datetime import datetime
 from typing import Any
 
+from app.schemas.cleaning import CleaningSummary
+from app.services.cleaning_config_store import cleaning_config_store
+from app.services.cleaning_service import apply_business_mappings
 from app.services.dataset_store import DatasetRecord, dataset_store
 from app.templates.definitions import ImportTemplateDefinition, get_template
 
@@ -15,7 +17,7 @@ class ImportValidationError(Exception):
 
 
 def _parse_number(value: str) -> float | None:
-    text = value.strip().replace(",", "")
+    text = value.strip().replace(",", "").replace("¥", "").replace("$", "").replace("￥", "")
     if not text:
         return None
     try:
@@ -46,6 +48,7 @@ def _normalize_date(value: str, month_only: bool = False) -> str | None:
 
 
 def _normalize_row(raw: dict[str, str], template: ImportTemplateDefinition) -> tuple[dict[str, Any], list[str]]:
+    """Structural normalization only (types / required). Business mapping happens later."""
     errors: list[str] = []
     normalized: dict[str, Any] = {}
 
@@ -69,8 +72,7 @@ def _normalize_row(raw: dict[str, str], template: ImportTemplateDefinition) -> t
             else:
                 normalized[column.key] = canonical
         else:
-            # Campaign dimensions (主体/业务线/费用大类/币种等) belong to each
-            # company upload. Template enum_values are examples only, never blockers.
+            # Campaign dimensions belong to each company upload.
             normalized[column.key] = raw_value
 
     return normalized, errors
@@ -108,7 +110,94 @@ def _compute_data_as_of(rows: list[dict[str, Any]], template: ImportTemplateDefi
     return max(values)
 
 
-def import_dataset_file(dataset_id: str, content: bytes) -> DatasetRecord:
+def _empty_summary(**overrides: Any) -> CleaningSummary:
+    base = CleaningSummary()
+    return base.model_copy(update=overrides)
+
+
+def _commit_rows(
+    record: DatasetRecord,
+    *,
+    raw_rows: list[dict[str, Any]],
+    cleaned_rows: list[dict[str, Any]],
+    summary: CleaningSummary,
+    template: ImportTemplateDefinition,
+    errors: list[str],
+) -> DatasetRecord:
+    record.raw_rows = raw_rows
+    record.rows = cleaned_rows
+    record.pending_rows = None
+    record.pending_raw_rows = None
+    record.cleaning_summary = summary.model_dump()
+    record.row_count = summary.total_rows
+    record.error_count = len(errors)
+    record.errors = errors[:50]
+    record.data_as_of = _compute_data_as_of(cleaned_rows, template)
+    if cleaned_rows and not errors:
+        record.status = "validated"
+    elif cleaned_rows:
+        record.status = "validated"
+        record.errors = errors[:50]
+    else:
+        record.status = "failed"
+    dataset_store.save(record)
+    return record
+
+
+def _snapshot_usable(record: DatasetRecord) -> dict[str, Any] | None:
+    """Keep a restore point so a bad re-upload cannot erase already-usable data."""
+    if record.status not in {"validated", "active", "pending_confirm"}:
+        return None
+    if not (record.rows or record.pending_rows):
+        return None
+    return {
+        "status": record.status,
+        "rows": list(record.rows),
+        "raw_rows": list(record.raw_rows or []),
+        "pending_rows": list(record.pending_rows) if record.pending_rows else None,
+        "pending_raw_rows": list(record.pending_raw_rows) if record.pending_raw_rows else None,
+        "row_count": record.row_count,
+        "error_count": record.error_count,
+        "errors": list(record.errors),
+        "data_as_of": record.data_as_of,
+        "cleaning_summary": record.cleaning_summary,
+    }
+
+
+def _restore_snapshot(record: DatasetRecord, snapshot: dict[str, Any]) -> None:
+    record.status = snapshot["status"]
+    record.rows = snapshot["rows"]
+    record.raw_rows = snapshot["raw_rows"]
+    record.pending_rows = snapshot["pending_rows"]
+    record.pending_raw_rows = snapshot["pending_raw_rows"]
+    record.row_count = snapshot["row_count"]
+    record.error_count = snapshot["error_count"]
+    record.errors = snapshot["errors"]
+    record.data_as_of = snapshot["data_as_of"]
+    record.cleaning_summary = snapshot["cleaning_summary"]
+
+
+def _domain_label(domain: str) -> str:
+    return {"expense": "费用", "revenue": "收入成本", "fund": "资金"}.get(domain, domain)
+
+
+def _missing_columns_message(domain: str, missing_keys: list[str], present_keys: list[str]) -> str:
+    label = _domain_label(domain)
+    hint = ""
+    present = set(present_keys)
+    if {"amount", "expense_category", "expense_subject"} & present and domain != "expense":
+        hint = " 检测到这更像「费用」模板文件，请确认左上角/上传页选择的是费用数据域。"
+    elif {"revenue", "cost", "business_line", "product_name"} & present and domain != "revenue":
+        hint = " 检测到这更像「收入成本」模板文件，请确认选择的是收入成本数据域。"
+    elif {"income_amount", "expense_amount", "bank_account"} & present and domain != "fund":
+        hint = " 检测到这更像「资金」模板文件，请确认选择的是资金数据域。"
+    return (
+        f"缺少「{label}」模板列: {', '.join(missing_keys)}。"
+        f"请使用第 1 行为英文字段名、第 2 行为中文表头的 CSV。{hint}"
+    )
+
+
+def import_dataset_file(dataset_id: str, content: bytes, *, auto_confirm: bool = False) -> DatasetRecord:
     record = dataset_store.get(dataset_id)
     if record is None:
         raise KeyError(dataset_id)
@@ -117,34 +206,40 @@ def import_dataset_file(dataset_id: str, content: bytes) -> DatasetRecord:
     if template is None:
         raise ImportValidationError(f"未知模板: {record.template_code}")
 
+    snapshot = _snapshot_usable(record)
+
+    def fail(message: str) -> None:
+        if snapshot is not None:
+            _restore_snapshot(record, snapshot)
+            dataset_store.save(record)
+        else:
+            record.status = "failed"
+            record.pending_rows = None
+            record.pending_raw_rows = None
+            record.cleaning_summary = None
+            record.errors = [message]
+            record.error_count = 1
+            dataset_store.save(record)
+        raise ImportValidationError(message)
+
     record.status = "validating"
     dataset_store.save(record)
 
     try:
-        keys, raw_rows = _read_csv_rows(content)
+        keys, raw_csv_rows = _read_csv_rows(content)
     except ImportValidationError as exc:
-        record.status = "failed"
-        record.errors = [str(exc)]
-        record.row_count = 0
-        record.error_count = 1
-        dataset_store.save(record)
-        return record
+        fail(str(exc))
 
     expected_keys = [col.key for col in template.columns]
     missing_keys = [key for key in expected_keys if key not in keys]
     if missing_keys:
-        record.status = "failed"
-        record.errors = [f"缺少模板列: {', '.join(missing_keys)}"]
-        record.row_count = len(raw_rows)
-        record.error_count = len(missing_keys)
-        dataset_store.save(record)
-        return record
+        fail(_missing_columns_message(record.domain, missing_keys, keys))
 
-    parsed_rows: list[dict[str, Any]] = []
+    structural_rows: list[dict[str, Any]] = []
     all_errors: list[str] = []
     seen_doc_nos: set[str] = set()
 
-    for index, raw in enumerate(raw_rows, start=3):
+    for index, raw in enumerate(raw_csv_rows, start=3):
         normalized, row_errors = _normalize_row(raw, template)
         doc_no = normalized.get("doc_no")
         if isinstance(doc_no, str):
@@ -155,22 +250,117 @@ def import_dataset_file(dataset_id: str, content: bytes) -> DatasetRecord:
         if row_errors:
             all_errors.extend([f"第 {index} 行: {msg}" for msg in row_errors])
             continue
-        parsed_rows.append(normalized)
+        structural_rows.append(normalized)
 
-    record.rows = parsed_rows
-    record.row_count = len(raw_rows)
+    if not structural_rows:
+        detail = "；".join(all_errors[:5]) if all_errors else "没有有效数据行"
+        fail(detail)
+
+    cleaning_config = cleaning_config_store.get(record.company)
+    cleaned_rows, summary = apply_business_mappings(
+        structural_rows,
+        cleaning_config,
+        template=template,
+    )
+    summary = summary.model_copy(
+        update={
+            "total_rows": len(raw_csv_rows),
+            "success_rows": len(cleaned_rows),
+            "error_rows": len(all_errors),
+        }
+    )
+
+    if auto_confirm:
+        return _commit_rows(
+            record,
+            raw_rows=structural_rows,
+            cleaned_rows=cleaned_rows,
+            summary=summary,
+            template=template,
+            errors=all_errors,
+        )
+
+    # Keep previously committed rows visible until user confirms the new batch.
+    record.pending_raw_rows = structural_rows
+    record.pending_rows = cleaned_rows
+    record.cleaning_summary = summary.model_dump()
+    record.row_count = len(raw_csv_rows)
     record.error_count = len(all_errors)
     record.errors = all_errors[:50]
-    record.data_as_of = _compute_data_as_of(parsed_rows, template)
+    record.data_as_of = _compute_data_as_of(cleaned_rows, template) or record.data_as_of
+    record.status = "pending_confirm"
+    dataset_store.save(record)
+    return record
 
-    if parsed_rows and not all_errors:
-        record.status = "validated"
-    elif parsed_rows:
-        record.status = "validated"
-        record.errors = all_errors[:50]
-    else:
-        record.status = "failed"
 
+def confirm_dataset_import(dataset_id: str) -> DatasetRecord:
+    record = dataset_store.get(dataset_id)
+    if record is None:
+        raise KeyError(dataset_id)
+    if record.status != "pending_confirm":
+        raise ImportValidationError("当前数据集没有待确认的清洗结果")
+    if not record.pending_rows:
+        raise ImportValidationError("待确认数据为空")
+
+    template = get_template(record.template_code)
+    if template is None:
+        raise ImportValidationError(f"未知模板: {record.template_code}")
+
+    summary = CleaningSummary.model_validate(record.cleaning_summary or {})
+    return _commit_rows(
+        record,
+        raw_rows=record.pending_raw_rows or [],
+        cleaned_rows=record.pending_rows,
+        summary=summary,
+        template=template,
+        errors=record.errors,
+    )
+
+
+def reapply_cleaning(dataset_id: str, *, auto_confirm: bool = False) -> DatasetRecord:
+    """Re-run business mappings on stored raw_rows (or current rows as fallback)."""
+    record = dataset_store.get(dataset_id)
+    if record is None:
+        raise KeyError(dataset_id)
+
+    template = get_template(record.template_code)
+    if template is None:
+        raise ImportValidationError(f"未知模板: {record.template_code}")
+
+    source_rows = record.raw_rows or record.rows
+    if not source_rows:
+        raise ImportValidationError("数据集没有可清洗的数据")
+
+    cleaning_config = cleaning_config_store.get(record.company)
+    cleaned_rows, summary = apply_business_mappings(
+        source_rows,
+        cleaning_config,
+        template=template,
+    )
+    summary = summary.model_copy(
+        update={
+            "total_rows": len(source_rows),
+            "success_rows": len(cleaned_rows),
+            "error_rows": 0,
+        }
+    )
+
+    if auto_confirm:
+        return _commit_rows(
+            record,
+            raw_rows=source_rows,
+            cleaned_rows=cleaned_rows,
+            summary=summary,
+            template=template,
+            errors=[],
+        )
+
+    record.pending_raw_rows = source_rows
+    record.pending_rows = cleaned_rows
+    record.cleaning_summary = summary.model_dump()
+    record.status = "pending_confirm"
+    record.errors = []
+    record.error_count = 0
     dataset_store.save(record)
     return record
 

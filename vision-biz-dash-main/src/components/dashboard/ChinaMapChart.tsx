@@ -97,7 +97,9 @@ const ChinaMapChart = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <h3 className="font-display text-base font-semibold text-foreground">区域销售分布</h3>
-          {live && <Badge className="text-[10px]">Campaign</Badge>}
+          {live && currentCompany?.name ? (
+            <Badge variant="secondary" className="text-[10px] truncate max-w-[140px]">{currentCompany.name}</Badge>
+          ) : null}
         </div>
       </div>
 

@@ -136,20 +136,20 @@ export const productGrossMargin = [
 
 export const operatingExpenses: Record<string, { category: string; amount: number; percentage: number; color: string }[]> = {
   "2025": [
-    { category: "研发费用", amount: 48500, percentage: 39.2, color: "hsl(262, 60%, 55%)" },
-    { category: "销售费用", amount: 28200, percentage: 22.8, color: "hsl(195, 85%, 50%)" },
-    { category: "管理费用", amount: 19800, percentage: 16.0, color: "hsl(150, 60%, 50%)" },
-    { category: "财务费用", amount: 9200, percentage: 7.4, color: "hsl(35, 90%, 55%)" },
-    { category: "折旧摊销", amount: 11500, percentage: 9.3, color: "hsl(340, 70%, 55%)" },
-    { category: "其他费用", amount: 6580, percentage: 5.3, color: "hsl(220, 40%, 50%)" },
+    { category: "研发费用", amount: 48.5, percentage: 39.2, color: "hsl(262, 60%, 55%)" },
+    { category: "销售费用", amount: 28.2, percentage: 22.8, color: "hsl(195, 85%, 50%)" },
+    { category: "管理费用", amount: 19.8, percentage: 16.0, color: "hsl(150, 60%, 50%)" },
+    { category: "财务费用", amount: 9.2, percentage: 7.4, color: "hsl(35, 90%, 55%)" },
+    { category: "折旧摊销", amount: 11.5, percentage: 9.3, color: "hsl(340, 70%, 55%)" },
+    { category: "其他费用", amount: 6.58, percentage: 5.3, color: "hsl(220, 40%, 50%)" },
   ],
   "2024": [
-    { category: "研发费用", amount: 42500, percentage: 38.2, color: "hsl(262, 60%, 55%)" },
-    { category: "销售费用", amount: 25800, percentage: 23.2, color: "hsl(195, 85%, 50%)" },
-    { category: "管理费用", amount: 18200, percentage: 16.4, color: "hsl(150, 60%, 50%)" },
-    { category: "财务费用", amount: 8500, percentage: 7.6, color: "hsl(35, 90%, 55%)" },
-    { category: "折旧摊销", amount: 10200, percentage: 9.2, color: "hsl(340, 70%, 55%)" },
-    { category: "其他费用", amount: 5980, percentage: 5.4, color: "hsl(220, 40%, 50%)" },
+    { category: "研发费用", amount: 42.5, percentage: 38.2, color: "hsl(262, 60%, 55%)" },
+    { category: "销售费用", amount: 25.8, percentage: 23.2, color: "hsl(195, 85%, 50%)" },
+    { category: "管理费用", amount: 18.2, percentage: 16.4, color: "hsl(150, 60%, 50%)" },
+    { category: "财务费用", amount: 8.5, percentage: 7.6, color: "hsl(35, 90%, 55%)" },
+    { category: "折旧摊销", amount: 10.2, percentage: 9.2, color: "hsl(340, 70%, 55%)" },
+    { category: "其他费用", amount: 5.98, percentage: 5.4, color: "hsl(220, 40%, 50%)" },
   ],
 };
 

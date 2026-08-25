@@ -54,7 +54,9 @@ const KpiCards = () => {
 
   return (
     <div className="space-y-2">
-      {live && <Badge className="text-[10px]">资金 Campaign 数据</Badge>}
+      {live && currentCompany?.name ? (
+        <Badge variant="secondary" className="text-[10px]">{currentCompany.name} · 资金</Badge>
+      ) : null}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card, index) => (
           <motion.div

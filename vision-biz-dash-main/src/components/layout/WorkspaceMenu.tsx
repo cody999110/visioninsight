@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { FolderPlus, LayoutDashboard, LayoutGrid, PieChart, Settings2, Table2 } from "lucide-react";
+import { FolderPlus, LayoutDashboard, LayoutGrid, PieChart, Settings2, Sparkles, Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +33,10 @@ export default function WorkspaceMenu() {
             <FolderPlus className="w-4 h-4" />
             Campaign 数据
           </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2 text-sm" onSelect={() => navigate("/cleaning/config")}>
+            <Sparkles className="w-4 h-4" />
+            数据清洗
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground font-medium">分析</DropdownMenuLabel>
@@ -55,7 +59,7 @@ export default function WorkspaceMenu() {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 text-sm" onSelect={() => navigate("/")}>
               <LayoutDashboard className="w-4 h-4" />
-              财务看板
+              VisionInsight
             </DropdownMenuItem>
           </>
         )}
