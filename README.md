@@ -2,6 +2,8 @@
 
 开源经营与财务 BI：**看板概览 + 图表穿透明细**。按公司上传数据、清洗映射，老板看图，分析师查数。
 
+![VisionInsight 主视觉](docs/screenshots/hero-visioninsight.jpg)
+
 远程仓库：[https://github.com/cody999110/vision-biz-dash](https://github.com/cody999110/vision-biz-dash)
 
 ## 效果预览
