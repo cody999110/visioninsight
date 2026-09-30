@@ -85,16 +85,3 @@ npm run dev
 cd vision-biz-dash-main
 node scripts/capture-readme-shots.mjs
 ```
-
-### 不会提交到 Git 的内容
-
-| 路径 | 说明 |
-|------|------|
-| `backend/storage/datasets/*.json` | 本地上传的 Campaign 真实数据 |
-| `backend/storage/cleaning_configs/*.json` | 各公司清洗映射配置 |
-| `backend/storage/mgmt_configs/*.json` | 各公司管理报表配置 |
-| `backend/.env` | 本地环境变量 |
-| `backend/.venv/` | Python 虚拟环境 |
-| `vision-biz-dash-main/node_modules/` | 前端依赖 |
-
-样例 CSV（`backend/samples/`）可提交，供他人演示使用。
