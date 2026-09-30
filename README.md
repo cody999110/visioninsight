@@ -1,6 +1,20 @@
-# VisionInsight 一键启动
+# VisionInsight
 
 开源经营与财务 BI：按公司上传数据、清洗映射、看板洞察与自助查询。
+
+远程仓库：[https://github.com/cody999110/vision-biz-dash](https://github.com/cody999110/vision-biz-dash)
+
+## 效果预览
+
+| 看板首页（紫晶主题） | 多皮肤切换（青绿） | 布局与模块选择 |
+|:---:|:---:|:---:|
+| ![看板首页](docs/screenshots/01-dashboard-violet.png) | ![多皮肤](docs/screenshots/02-theme-skins.png) | ![模块选择](docs/screenshots/03-layout-modules.png) |
+
+**亮点简述**
+
+- **经营看板**：资金 / 收入 / 费用 / 区域一目了然，支持多年对比  
+- **多皮肤**：紫晶（默认）、石板、青绿，图表配色跟随主题  
+- **可编排布局**：预设画廊 + 模块勾选，按公司记住你的首页  
 
 ## 一键启动（Windows）
 
@@ -57,13 +71,18 @@ npm run dev
 
 ## 仓库说明
 
-远程仓库：[https://github.com/cody999110/vision-biz-dash](https://github.com/cody999110/vision-biz-dash)
-
 本项目为 monorepo 结构：
 - `vision-biz-dash-main/` — 前端（Vite + React）
 - `backend/` — 后端（FastAPI）
-- `docs/` — 设计文档
+- `docs/` — 设计文档与截图
 - `start.ps1` — 一键启动脚本
+
+重新截取 README 效果图（需本地前后端已启动）：
+
+```powershell
+cd vision-biz-dash-main
+node scripts/capture-readme-shots.mjs
+```
 
 ### 不会提交到 Git 的内容
 
