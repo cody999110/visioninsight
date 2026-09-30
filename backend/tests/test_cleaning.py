@@ -42,7 +42,7 @@ def test_cleaning_config_crud_and_mapping_preview() -> None:
         json={
             "mappings": [
                 {"field": "entity_name", "source": "集团", "target": "集团总部"},
-                {"field": "business_line", "source": "智能安防", "target": "安防业务"},
+                {"field": "business_line", "source": "智能驾驶", "target": "智驾业务"},
             ],
             "trim_text": True,
             "normalize_dates": True,
@@ -81,7 +81,7 @@ def test_cleaning_config_crud_and_mapping_preview() -> None:
         assert detail.status_code == 200
         rows = detail.json()["preview_rows"]
         assert any(row.get("entity_name") == "集团总部" for row in rows)
-        assert any(row.get("business_line") == "安防业务" for row in rows)
+        assert any(row.get("business_line") == "智驾业务" for row in rows)
 
         distincts = client.get(f"/api/v1/cleaning/distincts?company={COMPANY}")
         assert distincts.status_code == 200

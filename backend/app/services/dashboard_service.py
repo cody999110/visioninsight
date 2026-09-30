@@ -4,9 +4,16 @@ from collections import defaultdict
 from typing import Any
 
 from app.schemas.dashboard import (
+    BusinessLineRevenueResponse,
+    ExpenseByDeptResponse,
     ExpenseStructureItem,
     ExpenseStructureResponse,
+    ExpenseTrendPoint,
+    ExpenseTrendResponse,
+    FundFlowPoint,
+    FundFlowResponse,
     FundKpiResponse,
+    NamedAmountItem,
     ProductMarginItem,
     ProductMarginResponse,
     RegionSalesResponse,
@@ -251,6 +258,173 @@ class DashboardService:
                 )
                 for category, amount in items
             ],
+            source_mode="dataset",
+            dataset_id=record.id,
+            is_live_data=True,
+        )
+
+    def business_line_revenue(
+        self,
+        year: str | None = None,
+        dataset_id: str | None = None,
+    ) -> BusinessLineRevenueResponse:
+        record, source_mode = _resolve_dataset("revenue", dataset_id)
+        selected_year = year or str(datetime_now_year())
+        if not record or not record.rows:
+            return BusinessLineRevenueResponse(
+                items=[],
+                year=selected_year,
+                source_mode=source_mode,
+                dataset_id=dataset_id,
+                is_live_data=False,
+            )
+
+        totals: dict[str, float] = defaultdict(float)
+        for row in record.rows:
+            date = str(row.get("trans_date", ""))
+            if date and not date.startswith(selected_year):
+                continue
+            name = str(row.get("business_line") or "未分类")
+            totals[name] += float(row.get("revenue") or 0) / 10000
+
+        grand_total = sum(totals.values()) or 1
+        ranked = sorted(totals.items(), key=lambda item: item[1], reverse=True)
+        items = [
+            NamedAmountItem(
+                name=name,
+                amount=round(amount, 2),
+                percentage=round((amount / grand_total) * 100, 1),
+                color=PRODUCT_COLORS[index % len(PRODUCT_COLORS)],
+            )
+            for index, (name, amount) in enumerate(ranked)
+        ]
+        return BusinessLineRevenueResponse(
+            items=items,
+            year=selected_year,
+            source_mode="dataset",
+            dataset_id=record.id,
+            is_live_data=True,
+        )
+
+    def expense_trend(self, year: str | None = None, dataset_id: str | None = None) -> ExpenseTrendResponse:
+        record, source_mode = _resolve_dataset("expense", dataset_id)
+        selected_year = year or str(datetime_now_year())
+        if not record or not record.rows:
+            return ExpenseTrendResponse(
+                year=selected_year,
+                points=[],
+                source_mode=source_mode,
+                dataset_id=dataset_id,
+                is_live_data=False,
+            )
+
+        buckets: dict[int, float] = defaultdict(float)
+        for row in record.rows:
+            date = str(row.get("trans_date", ""))
+            if not date.startswith(selected_year) or len(date) < 7:
+                continue
+            try:
+                month = int(date[5:7])
+            except ValueError:
+                continue
+            buckets[month] += float(row.get("amount") or 0) / 10000
+
+        points = [
+            ExpenseTrendPoint(month=_month_label(month), amount=round(buckets.get(month, 0.0), 2))
+            for month in range(1, 13)
+        ]
+        return ExpenseTrendResponse(
+            year=selected_year,
+            points=points,
+            source_mode="dataset",
+            dataset_id=record.id,
+            is_live_data=True,
+        )
+
+    def expense_by_dept(
+        self,
+        year: str | None = None,
+        limit: int = 8,
+        dataset_id: str | None = None,
+    ) -> ExpenseByDeptResponse:
+        record, source_mode = _resolve_dataset("expense", dataset_id)
+        selected_year = year or str(datetime_now_year())
+        if not record or not record.rows:
+            return ExpenseByDeptResponse(
+                year=selected_year,
+                items=[],
+                source_mode=source_mode,
+                dataset_id=dataset_id,
+                is_live_data=False,
+            )
+
+        totals: dict[str, float] = defaultdict(float)
+        for row in record.rows:
+            date = str(row.get("trans_date", ""))
+            if date and not date.startswith(selected_year):
+                continue
+            name = str(row.get("department_name") or "未分类")
+            totals[name] += float(row.get("amount") or 0) / 10000
+
+        grand_total = sum(totals.values()) or 1
+        ranked = sorted(totals.items(), key=lambda item: item[1], reverse=True)[:limit]
+        items = [
+            NamedAmountItem(
+                name=name,
+                amount=round(amount, 2),
+                percentage=round((amount / grand_total) * 100, 1),
+                color=PRODUCT_COLORS[index % len(PRODUCT_COLORS)],
+            )
+            for index, (name, amount) in enumerate(ranked)
+        ]
+        return ExpenseByDeptResponse(
+            year=selected_year,
+            items=items,
+            source_mode="dataset",
+            dataset_id=record.id,
+            is_live_data=True,
+        )
+
+    def fund_flow(self, year: str | None = None, dataset_id: str | None = None) -> FundFlowResponse:
+        record, source_mode = _resolve_dataset("fund", dataset_id)
+        selected_year = year or str(datetime_now_year())
+        if not record or not record.rows:
+            return FundFlowResponse(
+                year=selected_year,
+                points=[],
+                source_mode=source_mode,
+                dataset_id=dataset_id,
+                is_live_data=False,
+            )
+
+        buckets: dict[int, dict[str, float]] = defaultdict(lambda: {"income": 0.0, "expense": 0.0})
+        for row in record.rows:
+            date = str(row.get("trans_date", ""))
+            if not date.startswith(selected_year) or len(date) < 7:
+                continue
+            try:
+                month = int(date[5:7])
+            except ValueError:
+                continue
+            buckets[month]["income"] += float(row.get("income_amount") or 0) / 10000
+            buckets[month]["expense"] += float(row.get("expense_amount") or 0) / 10000
+
+        points = []
+        for month in range(1, 13):
+            values = buckets.get(month, {"income": 0.0, "expense": 0.0})
+            income = round(values["income"], 2)
+            expense = round(values["expense"], 2)
+            points.append(
+                FundFlowPoint(
+                    month=_month_label(month),
+                    income=income,
+                    expense=expense,
+                    net=round(income - expense, 2),
+                )
+            )
+        return FundFlowResponse(
+            year=selected_year,
+            points=points,
             source_mode="dataset",
             dataset_id=record.id,
             is_live_data=True,

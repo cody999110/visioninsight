@@ -11,9 +11,12 @@ import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 import { Badge } from "@/components/ui/badge";
 import DataEmptyState from "@/components/dashboard/DataEmptyState";
+import { chartYearColors, themeHsl } from "@/lib/chartColors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const RevenueChart = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { isDemo, datasetFor, currentCompany } = useDataSource();
   const datasetId = datasetFor("revenue");
 
@@ -67,13 +70,12 @@ const RevenueChart = () => {
     });
   }, [selectedYears, data, live]);
 
-  const colorMap: Record<string, { bar: string; line: string }> = {
-    "2021": { bar: "hsl(210, 80%, 75%)", line: "hsl(210, 80%, 50%)" },
-    "2022": { bar: "hsl(150, 60%, 70%)", line: "hsl(150, 60%, 42%)" },
-    "2023": { bar: "hsl(35, 90%, 75%)", line: "hsl(35, 90%, 50%)" },
-    "2024": { bar: "hsl(262, 60%, 65%)", line: "hsl(262, 80%, 45%)" },
-    "2025": { bar: "hsl(262, 60%, 65%)", line: "hsl(262, 80%, 45%)" },
-  };
+  const colorMap = useMemo(() => {
+    void theme;
+    return chartYearColors();
+  }, [theme]);
+  const fallbackBar = themeHsl("--primary", 0.55);
+  const fallbackLine = themeHsl("--primary");
 
   if (!isDemo && !live) {
     return (
@@ -150,7 +152,7 @@ const RevenueChart = () => {
                 key={`rev_${year}`}
                 yAxisId="left"
                 dataKey={`revenue_${year}`}
-                fill={colorMap[year]?.bar || "hsl(262,60%,65%)"}
+                fill={colorMap[year]?.bar || fallbackBar}
                 radius={[3, 3, 0, 0]}
                 barSize={selectedYears.length > 2 ? 12 : 20}
                 opacity={0.9}
@@ -162,7 +164,7 @@ const RevenueChart = () => {
                 yAxisId="right"
                 type="monotone"
                 dataKey={`grossMargin_${year}`}
-                stroke={colorMap[year]?.line || "hsl(262,80%,45%)"}
+                stroke={colorMap[year]?.line || fallbackLine}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

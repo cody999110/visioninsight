@@ -274,6 +274,45 @@ export interface ExpenseStructureResponse extends LiveDataMeta {
   items: ExpenseStructureItem[];
 }
 
+export interface NamedAmountItem {
+  name: string;
+  amount: number;
+  percentage: number;
+  color?: string | null;
+}
+
+export interface BusinessLineRevenueResponse extends LiveDataMeta {
+  items: NamedAmountItem[];
+  year?: string | null;
+}
+
+export interface ExpenseTrendPoint {
+  month: string;
+  amount: number;
+}
+
+export interface ExpenseTrendResponse extends LiveDataMeta {
+  year: string;
+  points: ExpenseTrendPoint[];
+}
+
+export interface ExpenseByDeptResponse extends LiveDataMeta {
+  year: string;
+  items: NamedAmountItem[];
+}
+
+export interface FundFlowPoint {
+  month: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export interface FundFlowResponse extends LiveDataMeta {
+  year: string;
+  points: FundFlowPoint[];
+}
+
 export interface BusinessLineConfig {
   id: string;
   name: string;
@@ -499,6 +538,30 @@ export const api = {
     const params = new URLSearchParams({ year });
     if (datasetId) params.set("dataset_id", datasetId);
     return request<ExpenseStructureResponse>(`/dashboard/expense-structure?${params.toString()}`);
+  },
+
+  getBusinessLineRevenue(year: string, datasetId?: string) {
+    const params = new URLSearchParams({ year });
+    if (datasetId) params.set("dataset_id", datasetId);
+    return request<BusinessLineRevenueResponse>(`/dashboard/business-line-revenue?${params.toString()}`);
+  },
+
+  getExpenseTrend(year: string, datasetId?: string) {
+    const params = new URLSearchParams({ year });
+    if (datasetId) params.set("dataset_id", datasetId);
+    return request<ExpenseTrendResponse>(`/dashboard/expense-trend?${params.toString()}`);
+  },
+
+  getExpenseByDept(year: string, datasetId?: string) {
+    const params = new URLSearchParams({ year });
+    if (datasetId) params.set("dataset_id", datasetId);
+    return request<ExpenseByDeptResponse>(`/dashboard/expense-by-dept?${params.toString()}`);
+  },
+
+  getFundFlow(year: string, datasetId?: string) {
+    const params = new URLSearchParams({ year });
+    if (datasetId) params.set("dataset_id", datasetId);
+    return request<FundFlowResponse>(`/dashboard/fund-flow?${params.toString()}`);
   },
 
   getManagementConfig(company: string) {

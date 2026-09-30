@@ -8,9 +8,12 @@ import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 import { Badge } from "@/components/ui/badge";
 import DataEmptyState from "@/components/dashboard/DataEmptyState";
+import { themeHsl } from "@/lib/chartColors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const ExpensesChart = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { isDemo, datasetFor, currentCompany } = useDataSource();
   const datasetId = datasetFor("expense");
   const [selectedYear, setSelectedYear] = useState<"2025" | "2024">("2025");
@@ -40,7 +43,12 @@ const ExpensesChart = () => {
   }
 
   // API + mock amounts are both in 万元.
-  const dataForYear = liveData ?? mockOperatingExpenses[selectedYear];
+  void theme;
+  const raw = liveData ?? mockOperatingExpenses[selectedYear];
+  const dataForYear = raw.map((item, i) => ({
+    ...item,
+    color: themeHsl(`--chart-${(i % 5) + 1}`),
+  }));
   const total = dataForYear.reduce((sum, item) => sum + item.amount, 0);
 
   return (

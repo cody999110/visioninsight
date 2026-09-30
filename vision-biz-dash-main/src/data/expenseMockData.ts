@@ -17,8 +17,8 @@ export const granularityOptions = ["月", "周", "日"];
 
 export const departments = ["销售一部", "销售二部", "研发一部", "研发二部", "市场部", "管理部", "财务部", "人力资源部", "供应链部", "品质部"];
 export const salesPersons = ["张伟", "李娜", "王强", "刘洋", "陈芳", "赵鹏", "黄丽", "周明", "吴刚", "林燕"];
-export const customers = ["豪威集团", "京鸿志物流", "淳显科技", "恒毅信息", "安波福电子", "华为技术", "比亚迪", "大疆创新", "海康威视", "中兴通讯"];
-export const projects = ["AX650N量产", "AX630C研发", "AX620Q迭代", "新一代ISP研发", "车载AI芯片", "智能安防方案", "机器人视觉", "AIoT平台"];
+export const customers = ["比亚迪", "特斯拉", "大众汽车", "丰田汽车", "本田汽车", "宝马", "奔驰", "吉利汽车", "长城汽车", "理想汽车"];
+export const projects = ["NovaDrive量产", "PulseVision研发", "OptiSense迭代", "智能座舱平台", "车载感知方案", "动力电子模块", "域控制器联调", "舱内监测方案"];
 export const suppliers = ["德勤咨询", "上海电信", "万科物业", "中国国航", "携程商旅", "京东企业购", "顺丰速运", "阿里云"];
 export const approvalStatuses = ["已审批", "审批中", "已驳回", "待提交"];
 

@@ -7,9 +7,12 @@ import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 import { Badge } from "@/components/ui/badge";
 import DataEmptyState from "@/components/dashboard/DataEmptyState";
+import { themeHsl } from "@/lib/chartColors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const ProductMarginChart = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { isDemo, datasetFor, currentCompany } = useDataSource();
   const datasetId = datasetFor("revenue");
 
@@ -30,9 +33,18 @@ const ProductMarginChart = () => {
     );
   }
 
+  void theme;
   const chartData = live
-    ? data.items.map(item => ({ name: item.name, margin: item.margin, revenue: item.revenue, color: item.color }))
-    : mockProductGrossMargin;
+    ? data.items.map((item, i) => ({
+        name: item.name,
+        margin: item.margin,
+        revenue: item.revenue,
+        color: item.color || themeHsl(`--chart-${(i % 5) + 1}`),
+      }))
+    : mockProductGrossMargin.map((item, i) => ({
+        ...item,
+        color: themeHsl(`--chart-${(i % 5) + 1}`),
+      }));
 
   return (
     <motion.div

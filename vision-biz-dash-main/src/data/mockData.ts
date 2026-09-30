@@ -119,19 +119,19 @@ export const regionSalesData: Record<string, number> = {
 };
 
 export const topCustomers = [
-  { name: "豪威集团", sales: 42800, percentage: 18.5, trend: 22.3 },
-  { name: "深圳市京鸿志物流有限公司", sales: 31200, percentage: 13.5, trend: 15.8 },
-  { name: "北京淳显科技有限公司", sales: 25600, percentage: 11.1, trend: 8.6 },
-  { name: "杭州恒毅信息技术有限公司", sales: 19800, percentage: 8.6, trend: -2.5 },
-  { name: "安波福电子（苏州）有限公司", sales: 16500, percentage: 7.1, trend: 12.1 },
+  { name: "比亚迪", sales: 42800, percentage: 18.5, trend: 22.3 },
+  { name: "特斯拉", sales: 31200, percentage: 13.5, trend: 15.8 },
+  { name: "大众汽车", sales: 25600, percentage: 11.1, trend: 8.6 },
+  { name: "丰田汽车", sales: 19800, percentage: 8.6, trend: -2.5 },
+  { name: "理想汽车", sales: 16500, percentage: 7.1, trend: 12.1 },
 ];
 
 export const productGrossMargin = [
-  { name: "AX650N", margin: 28.5, revenue: 45200, color: "hsl(262, 60%, 55%)" },
-  { name: "AX630C", margin: 24.2, revenue: 32100, color: "hsl(195, 85%, 50%)" },
-  { name: "AX620Q", margin: 22.8, revenue: 25800, color: "hsl(150, 60%, 50%)" },
-  { name: "AX620A", margin: 20.5, revenue: 18600, color: "hsl(35, 90%, 55%)" },
-  { name: "AX530", margin: 18.2, revenue: 12500, color: "hsl(340, 70%, 55%)" },
+  { name: "NovaDrive-H800", margin: 28.5, revenue: 45200, color: "hsl(262, 60%, 55%)" },
+  { name: "PulseVision-M600", margin: 24.2, revenue: 32100, color: "hsl(195, 85%, 50%)" },
+  { name: "OptiSense-Q400", margin: 22.8, revenue: 25800, color: "hsl(150, 60%, 50%)" },
+  { name: "GridCam-A300", margin: 20.5, revenue: 18600, color: "hsl(35, 90%, 55%)" },
+  { name: "CoreLink-S200", margin: 18.2, revenue: 12500, color: "hsl(340, 70%, 55%)" },
 ];
 
 export const operatingExpenses: Record<string, { category: string; amount: number; percentage: number; color: string }[]> = {
@@ -154,3 +154,150 @@ export const operatingExpenses: Record<string, { category: string; amount: numbe
 };
 
 export const years = ["2021", "2022", "2023", "2024", "2025"];
+
+export const mockOpsKpiByYear: Record<string, {
+  revenue: number;
+  revenuePrior: number;
+  revenueYoy: number;
+  grossProfit: number;
+  grossMargin: number;
+  expense: number;
+}> = {
+  "2025": {
+    revenue: 12850,
+    revenuePrior: 11240,
+    revenueYoy: 14.3,
+    grossProfit: 4120,
+    grossMargin: 32.1,
+    expense: 1860,
+  },
+  "2024": {
+    revenue: 11240,
+    revenuePrior: 9860,
+    revenueYoy: 14.0,
+    grossProfit: 3480,
+    grossMargin: 31.0,
+    expense: 1620,
+  },
+};
+
+export const mockBizLineRevenueByYear: Record<string, { name: string; amount: number; percentage: number }[]> = {
+  "2025": [
+    { name: "智能驾驶", amount: 5200, percentage: 40.5 },
+    { name: "座舱域控", amount: 3400, percentage: 26.5 },
+    { name: "车规芯片", amount: 2800, percentage: 21.8 },
+    { name: "其他", amount: 1450, percentage: 11.2 },
+  ],
+  "2024": [
+    { name: "智能驾驶", amount: 4500, percentage: 40.0 },
+    { name: "座舱域控", amount: 3100, percentage: 27.6 },
+    { name: "车规芯片", amount: 2400, percentage: 21.4 },
+    { name: "其他", amount: 1240, percentage: 11.0 },
+  ],
+};
+
+export const mockExpenseTrendByYear: Record<string, { month: string; amount: number }[]> = {
+  "2025": [
+    { month: "1月", amount: 98 }, { month: "2月", amount: 86 }, { month: "3月", amount: 112 },
+    { month: "4月", amount: 105 }, { month: "5月", amount: 128 }, { month: "6月", amount: 142 },
+    { month: "7月", amount: 136 }, { month: "8月", amount: 148 }, { month: "9月", amount: 155 },
+    { month: "10月", amount: 162 }, { month: "11月", amount: 170 }, { month: "12月", amount: 178 },
+  ],
+  "2024": [
+    { month: "1月", amount: 88 }, { month: "2月", amount: 79 }, { month: "3月", amount: 96 },
+    { month: "4月", amount: 92 }, { month: "5月", amount: 110 }, { month: "6月", amount: 124 },
+    { month: "7月", amount: 118 }, { month: "8月", amount: 130 }, { month: "9月", amount: 138 },
+    { month: "10月", amount: 145 }, { month: "11月", amount: 152 }, { month: "12月", amount: 160 },
+  ],
+};
+
+export const mockExpenseByDeptByYear: Record<string, { name: string; amount: number; percentage: number }[]> = {
+  "2025": [
+    { name: "研发一部", amount: 420, percentage: 28.4 },
+    { name: "研发二部", amount: 310, percentage: 21.0 },
+    { name: "销售中心", amount: 260, percentage: 17.6 },
+    { name: "供应链", amount: 180, percentage: 12.2 },
+    { name: "行政人事", amount: 150, percentage: 10.1 },
+    { name: "财务", amount: 160, percentage: 10.7 },
+  ],
+  "2024": [
+    { name: "研发一部", amount: 380, percentage: 28.0 },
+    { name: "研发二部", amount: 285, percentage: 21.0 },
+    { name: "销售中心", amount: 240, percentage: 17.7 },
+    { name: "供应链", amount: 165, percentage: 12.2 },
+    { name: "行政人事", amount: 140, percentage: 10.3 },
+    { name: "财务", amount: 148, percentage: 10.8 },
+  ],
+};
+
+export const mockFundFlowByYear: Record<string, { month: string; income: number; expense: number; net: number }[]> = {
+  "2025": [
+    { month: "1月", income: 820, expense: 640, net: 180 },
+    { month: "2月", income: 610, expense: 580, net: 30 },
+    { month: "3月", income: 980, expense: 720, net: 260 },
+    { month: "4月", income: 870, expense: 690, net: 180 },
+    { month: "5月", income: 1020, expense: 760, net: 260 },
+    { month: "6月", income: 1150, expense: 810, net: 340 },
+    { month: "7月", income: 980, expense: 790, net: 190 },
+    { month: "8月", income: 1080, expense: 830, net: 250 },
+    { month: "9月", income: 1210, expense: 880, net: 330 },
+    { month: "10月", income: 990, expense: 860, net: 130 },
+    { month: "11月", income: 1120, expense: 910, net: 210 },
+    { month: "12月", income: 1280, expense: 950, net: 330 },
+  ],
+  "2024": [
+    { month: "1月", income: 740, expense: 590, net: 150 },
+    { month: "2月", income: 560, expense: 540, net: 20 },
+    { month: "3月", income: 880, expense: 660, net: 220 },
+    { month: "4月", income: 790, expense: 640, net: 150 },
+    { month: "5月", income: 920, expense: 700, net: 220 },
+    { month: "6月", income: 1040, expense: 750, net: 290 },
+    { month: "7月", income: 900, expense: 730, net: 170 },
+    { month: "8月", income: 980, expense: 770, net: 210 },
+    { month: "9月", income: 1100, expense: 810, net: 290 },
+    { month: "10月", income: 910, expense: 790, net: 120 },
+    { month: "11月", income: 1020, expense: 840, net: 180 },
+    { month: "12月", income: 1160, expense: 880, net: 280 },
+  ],
+};
+
+/** 管报演示 mock：按年业务线经营对比 */
+export const mockMgmtLineCompareByYear: Record<string, {
+  year: number;
+  priorYear: number;
+  lines: { name: string; revenue: number; priorRevenue: number; margin: number; expense: number }[];
+}> = {
+  "2025": {
+    year: 2025,
+    priorYear: 2024,
+    lines: [
+      { name: "智能驾驶", revenue: 5200, priorRevenue: 4500, margin: 34.2, expense: 680 },
+      { name: "座舱域控", revenue: 3400, priorRevenue: 3100, margin: 29.8, expense: 420 },
+      { name: "车规芯片", revenue: 2800, priorRevenue: 2400, margin: 38.5, expense: 360 },
+      { name: "其他", revenue: 1450, priorRevenue: 1240, margin: 22.1, expense: 400 },
+    ],
+  },
+  "2024": {
+    year: 2024,
+    priorYear: 2023,
+    lines: [
+      { name: "智能驾驶", revenue: 4500, priorRevenue: 3900, margin: 32.8, expense: 610 },
+      { name: "座舱域控", revenue: 3100, priorRevenue: 2700, margin: 28.4, expense: 380 },
+      { name: "车规芯片", revenue: 2400, priorRevenue: 2050, margin: 36.9, expense: 320 },
+      { name: "其他", revenue: 1240, priorRevenue: 1100, margin: 21.0, expense: 360 },
+    ],
+  },
+};
+
+/** @deprecated use mockOpsKpiByYear */
+export const mockOpsKpi = mockOpsKpiByYear["2025"];
+/** @deprecated use mockBizLineRevenueByYear */
+export const mockBizLineRevenue = mockBizLineRevenueByYear["2025"];
+/** @deprecated use mockExpenseTrendByYear */
+export const mockExpenseTrend = mockExpenseTrendByYear["2025"];
+/** @deprecated use mockExpenseByDeptByYear */
+export const mockExpenseByDept = mockExpenseByDeptByYear["2025"];
+/** @deprecated use mockFundFlowByYear */
+export const mockFundFlow = mockFundFlowByYear["2025"];
+/** @deprecated use mockMgmtLineCompareByYear */
+export const mockMgmtLineCompare = mockMgmtLineCompareByYear["2025"];

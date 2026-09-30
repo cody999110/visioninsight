@@ -9,6 +9,8 @@ import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 import { Badge } from "@/components/ui/badge";
 import DataEmptyState from "@/components/dashboard/DataEmptyState";
+import { themeHeatColor } from "@/lib/chartColors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ProvinceFeature {
   type: string;
@@ -30,21 +32,16 @@ const nameMap: Record<string, string> = {
   "澳门特别行政区": "澳门",
 };
 
-const getColor = (value: number, max: number) => {
-  const ratio = value / max;
-  if (ratio > 0.7) return "hsl(262, 70%, 35%)";
-  if (ratio > 0.5) return "hsl(262, 60%, 45%)";
-  if (ratio > 0.35) return "hsl(262, 55%, 55%)";
-  if (ratio > 0.2) return "hsl(262, 45%, 65%)";
-  if (ratio > 0.1) return "hsl(262, 35%, 78%)";
-  if (ratio > 0.03) return "hsl(262, 25%, 88%)";
-  return "hsl(262, 15%, 93%)";
-};
-
 const ChinaMapChart = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { isDemo, datasetFor, currentCompany } = useDataSource();
   const datasetId = datasetFor("revenue");
+
+  const getColor = useMemo(() => {
+    void theme;
+    return (value: number, max: number) => themeHeatColor(max > 0 ? value / max : 0);
+  }, [theme]);
 
   const { data } = useQuery({
     queryKey: ["dashboard", "region-sales", datasetId],

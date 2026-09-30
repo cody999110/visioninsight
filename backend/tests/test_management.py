@@ -60,8 +60,8 @@ def test_management_config_and_report_aggregation() -> None:
             params={"company": COMPANY},
             json={
                 "business_lines": [
-                    {"id": "tires", "name": "轮胎", "aliases": ["智能安防"], "catch_all": False},
-                    {"id": "oil", "name": "机油", "aliases": ["智能驾驶"], "catch_all": False},
+                    {"id": "tires", "name": "智能驾驶线", "aliases": ["智能驾驶"], "catch_all": False},
+                    {"id": "oil", "name": "车载感知线", "aliases": ["车载感知"], "catch_all": False},
                     {"id": "other", "name": "其他", "aliases": [], "catch_all": True},
                 ],
                 "expense_groups": [
@@ -101,8 +101,8 @@ def test_management_config_and_report_aggregation() -> None:
         distincts = client.get("/api/v1/management/distincts", params={"company": COMPANY})
         assert distincts.status_code == 200
         payload = distincts.json()
-        assert "智能安防" in payload["mapped_business_lines"]
-        assert "AIoT" in payload["unmapped_business_lines"]
+        assert "智能驾驶" in payload["mapped_business_lines"]
+        assert "智能座舱" in payload["unmapped_business_lines"]
         assert "差旅费" in payload["expense_subjects"]
 
         report_resp = client.get("/api/v1/management/report", params={"company": COMPANY, "year": 2025})
@@ -113,16 +113,16 @@ def test_management_config_and_report_aggregation() -> None:
         assert report["kpis"]["revenue"] == 322.0
 
         by_id = {row["line_id"]: row for row in report["lines"]}
-        assert by_id["tires"]["revenue"]["year"] == 182.8
-        assert by_id["oil"]["revenue"]["year"] == 57.6
-        assert by_id["other"]["revenue"]["year"] == 81.6
-        assert by_id["tires"]["revenue"]["h1"] == 182.8
+        assert by_id["tires"]["revenue"]["year"] == 195.4
+        assert by_id["oil"]["revenue"]["year"] == 81.6
+        assert by_id["other"]["revenue"]["year"] == 45.0
+        assert by_id["tires"]["revenue"]["h1"] == 195.4
         assert by_id["tires"]["revenue"]["h2"] == 0
 
-        assert by_id["tires"]["expense"]["year"] == _Approx(21 + 12.5 * 182.8 / 322)
-        assert by_id["oil"]["expense"]["year"] == _Approx(21 + 8.6 + 12.5 * 57.6 / 322)
-        assert by_id["other"]["expense"]["year"] == _Approx(12.5 * 81.6 / 322)
-        assert by_id["tires"]["expense_groups"]["labor"]["year"] == _Approx(12.5 * 182.8 / 322)
+        assert by_id["tires"]["expense"]["year"] == _Approx(21 + 12.5 * 195.4 / 322)
+        assert by_id["oil"]["expense"]["year"] == _Approx(21 + 8.6 + 12.5 * 81.6 / 322)
+        assert by_id["other"]["expense"]["year"] == _Approx(1.75, rel=0.02)
+        assert by_id["tires"]["expense_groups"]["labor"]["year"] == _Approx(12.5 * 195.4 / 322)
         assert by_id["oil"]["expense_groups"]["market"]["year"] == 8.6
         assert by_id["total"]["kind"] == "total"
         assert report["kpis"]["unallocated_expense"] == 0

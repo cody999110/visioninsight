@@ -1,5 +1,5 @@
 trans_date,entity_name,department_name,sales_person,customer_name,project_name,expense_category,expense_subject,cost_center,amount,currency,doc_no,approval_status,summary,supplier_name
 发生日期,主体,部门,销售人员,客户,项目,费用大类,费用科目,成本中心,金额,币种,单据号,审批状态,摘要,供应商
-2025-03-01,集团,研发一部,张伟,豪威集团,AX650N量产,研发费用,差旅费,CC-100,125000,CNY,BX2025001,已审批,客户拜访,中国国航
-2025-04-12,集团,销售一部,李娜,比亚迪,车载AI芯片,销售费用,市场推广费,CC-200,86000,CNY,BX2025002,已审批,展会参加,京东企业购
+2025-03-01,集团,研发一部,张伟,比亚迪,NovaDrive量产,研发费用,差旅费,CC-100,125000,CNY,BX2025001,已审批,客户拜访,中国国航
+2025-04-12,集团,销售一部,李娜,特斯拉,车载感知方案,销售费用,市场推广费,CC-200,86000,CNY,BX2025002,已审批,展会参加,京东企业购
 2025-05-20,集团,管理部,王强,,,管理费用,房租水电费,CC-300,420000,CNY,BX2025003,已审批,办公室租金,万科物业

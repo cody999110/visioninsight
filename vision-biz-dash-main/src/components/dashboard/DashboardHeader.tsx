@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { useDataSource } from "@/contexts/DataSourceContext";
 
 const DashboardHeader = () => {
-  const { selectedView, isDemo, currentCompany } = useDataSource();
+  const { selectedView, currentCompany } = useDataSource();
 
   const freshnessDatasetId = currentCompany
     ? currentCompany.datasets.revenue ??
@@ -47,8 +47,6 @@ const DashboardHeader = () => {
         <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
           <Calendar className="w-3.5 h-3.5" />
           <span>{freshness?.label ?? "—"}</span>
-          <span className="text-border">·</span>
-          <span>{isDemo ? "演示数据" : (currentCompany?.name ?? "已上传数据")}</span>
         </div>
         <WorkspaceMenu />
       </div>

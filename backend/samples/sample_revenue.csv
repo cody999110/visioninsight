@@ -1,7 +1,7 @@
 trans_date,entity_name,business_line,customer_code,customer_name,sales_person,sales_channel,product_code,product_name,spec,model,region,province,revenue_type,quantity,unit_price,revenue,cost,doc_no,currency
 日期,主体,业务线,客户编号,客户名称,销售人员,销售渠道,产品编号,品名,规格,汇报型号,销售区域,省份,类型,数量,单价,收入,成本,单据号,币种
-2025-01-15,集团,智能安防,C-001,豪威集团,张明,直销,P-001,AX650N,BGA/28nm/8GB,AX650N,华东,广东,收入,1000,850,850000,620000,SO-2025001,CNY
-2025-02-20,集团,智能驾驶,C-002,比亚迪,李华,OEM,P-002,AX630C,BGA/28nm/4GB,AX630C,华南,广东,收入,800,720,576000,460000,SO-2025002,CNY
-2025-03-10,集团,AIoT,C-003,海康威视,王强,直销,P-003,AX620Q,QFN/40nm/2GB,AX620Q,华东,浙江,收入,1200,680,816000,580000,SO-2025003,CNY
-2025-04-05,集团,智能安防,C-004,宇视科技,赵丽,代理商,P-001,AX650N,BGA/28nm/8GB,AX650N,华北,北京,收入,500,900,450000,320000,SO-2025004,CNY
-2025-05-18,集团,智能安防,C-001,豪威集团,张明,直销,P-001,AX650N,BGA/28nm/8GB,AX650N,华东,江苏,收入,600,880,528000,380000,SO-2025005,CNY
+2025-01-15,集团,智能驾驶,C-001,比亚迪,张明,直销,P-001,NovaDrive-H800,BGA/7nm/32TOPS,NovaDrive-H800,华东,广东,收入,1000,850,850000,620000,SO-2025001,CNY
+2025-02-20,集团,智能驾驶,C-002,特斯拉,李华,OEM,P-002,PulseVision-M600,BGA/12nm/16TOPS,PulseVision-M600,华南,上海,收入,800,720,576000,460000,SO-2025002,CNY
+2025-03-10,集团,车载感知,C-003,大众汽车,王强,直销,P-003,OptiSense-Q400,QFN/16nm/8TOPS,OptiSense-Q400,华东,江苏,收入,1200,680,816000,580000,SO-2025003,CNY
+2025-04-05,集团,智能座舱,C-004,丰田汽车,赵丽,代理商,P-001,NovaDrive-H800,BGA/7nm/32TOPS,NovaDrive-H800,华北,北京,收入,500,900,450000,320000,SO-2025004,CNY
+2025-05-18,集团,智能驾驶,C-001,比亚迪,张明,直销,P-001,NovaDrive-H800,BGA/7nm/32TOPS,NovaDrive-H800,华东,广东,收入,600,880,528000,380000,SO-2025005,CNY

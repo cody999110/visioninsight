@@ -91,9 +91,9 @@ def test_download_and_reupload_dataset() -> None:
     lines = [line for line in body.splitlines() if line.strip()]
     assert lines[0].startswith("trans_date")
     assert "日期" in lines[1]
-    assert any("豪威集团" in line for line in lines[2:])
+    assert any("比亚迪" in line for line in lines[2:])
 
-    edited = body.replace("豪威集团", "豪威集团-修订", 1).encode("utf-8-sig")
+    edited = body.replace("比亚迪", "比亚迪-修订", 1).encode("utf-8-sig")
     reupload_resp = client.post(
         f"/api/v1/import/datasets/{dataset_id}/upload?auto_confirm=true",
         files={"file": ("edited.csv", BytesIO(edited), "text/csv")},
@@ -102,7 +102,7 @@ def test_download_and_reupload_dataset() -> None:
     assert reupload_resp.json()["can_activate"] is True
 
     again = client.get(f"/api/v1/import/datasets/{dataset_id}/download")
-    assert "豪威集团-修订" in again.content.decode("utf-8-sig")
+    assert "比亚迪-修订" in again.content.decode("utf-8-sig")
 
     dataset_store.delete(dataset_id)
 

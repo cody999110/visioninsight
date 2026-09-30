@@ -1,14 +1,13 @@
 // Mock data for revenue/cost/margin query platform
 
 export const revenueEntities = ["集团", "华东主体", "华南主体", "华北主体"];
-export const businessLines = ["智能安防", "智能驾驶", "AIoT", "芯片IP授权", "技术服务"];
+export const businessLines = ["智能驾驶", "智能座舱", "车载感知", "动力电子", "技术服务"];
 export const revenueCurrencies = ["本位币", "集团币", "USD"];
 export const regions = ["华东", "华南", "华北", "华中", "西南", "西北", "东北", "海外"];
 export const revenueCustomers = [
-  "豪威集团", "深圳市京鸿志物流有限公司", "北京淳显科技有限公司",
-  "杭州恒毅信息技术有限公司", "安波福电子（苏州）有限公司",
-  "海康威视", "大华技术", "宇视科技", "华为技术", "中兴通讯",
-  "比亚迪", "小鹏汽车", "理想汽车", "蔚来汽车", "吉利汽车",
+  "比亚迪", "特斯拉", "大众汽车", "丰田汽车", "本田汽车",
+  "宝马", "奔驰", "吉利汽车", "长城汽车", "理想汽车",
+  "蔚来", "小鹏汽车", "上汽集团", "广汽集团", "长安汽车",
 ];
 export const revenueTypes = ["收入", "成本"];
 
@@ -31,13 +30,13 @@ export const revenueMetrics = [
 
 // Products
 const products = [
-  { id: "P-001", name: "AX650N", spec: "BGA/28nm/8GB", model: "AX650N" },
-  { id: "P-002", name: "AX630C", spec: "BGA/28nm/4GB", model: "AX630C" },
-  { id: "P-003", name: "AX620Q", spec: "QFN/40nm/2GB", model: "AX620Q" },
-  { id: "P-004", name: "AX620A", spec: "BGA/40nm/4GB", model: "AX620A" },
-  { id: "P-005", name: "AX530", spec: "QFN/55nm/1GB", model: "AX530" },
-  { id: "P-006", name: "AX320", spec: "QFN/55nm/512MB", model: "AX320" },
-  { id: "P-007", name: "AX170A", spec: "QFP/65nm/256MB", model: "AX170A" },
+  { id: "P-001", name: "NovaDrive-H800", spec: "BGA/7nm/32TOPS", model: "NovaDrive-H800" },
+  { id: "P-002", name: "PulseVision-M600", spec: "BGA/12nm/16TOPS", model: "PulseVision-M600" },
+  { id: "P-003", name: "OptiSense-Q400", spec: "QFN/16nm/8TOPS", model: "OptiSense-Q400" },
+  { id: "P-004", name: "GridCam-A300", spec: "BGA/22nm/4TOPS", model: "GridCam-A300" },
+  { id: "P-005", name: "CoreLink-S200", spec: "QFN/28nm/2TOPS", model: "CoreLink-S200" },
+  { id: "P-006", name: "CabinView-C150", spec: "QFN/28nm/1TOPS", model: "CabinView-C150" },
+  { id: "P-007", name: "EdgeGuard-E100", spec: "QFP/40nm/0.5TOPS", model: "EdgeGuard-E100" },
 ];
 
 const salesPersonList = [
