@@ -1,20 +1,22 @@
 # VisionInsight
 
-开源经营与财务 BI：按公司上传数据、清洗映射、看板洞察与自助查询。
+开源经营与财务 BI：**看板概览 + 图表穿透明细**。按公司上传数据、清洗映射，老板看图，分析师查数。
 
 远程仓库：[https://github.com/cody999110/vision-biz-dash](https://github.com/cody999110/vision-biz-dash)
 
 ## 效果预览
 
-| 看板首页（紫晶主题） | 多皮肤切换（青绿） | 布局与模块选择 |
+| 经营看板概览 | 图表穿透 · BI 明细查询 | 布局与模块编排 |
 |:---:|:---:|:---:|
-| ![看板首页](docs/screenshots/01-dashboard-violet.png) | ![多皮肤](docs/screenshots/02-theme-skins.png) | ![模块选择](docs/screenshots/03-layout-modules.png) |
+| ![看板首页](docs/screenshots/01-dashboard-violet.png) | ![BI 查询台](docs/screenshots/02-bi-query.png) | ![模块选择](docs/screenshots/03-layout-modules.png) |
 
 **亮点简述**
 
-- **经营看板**：资金 / 收入 / 费用 / 区域一目了然，支持多年对比  
-- **多皮肤**：紫晶（默认）、石板、青绿，图表配色跟随主题  
-- **可编排布局**：预设画廊 + 模块勾选，按公司记住你的首页  
+- **图表看大局**：资金 / 收入 / 费用 / 区域一张首页看清，支持多年对比  
+- **点击看明细**：看板图表可穿透进入 Query Builder，按维度/指标自由查询、导出  
+- **布局可编排**：预设画廊 + 模块勾选，按公司记住首页组合  
+
+开源经营与财务 BI 的本质：**既服务老板一眼概览，也能让人钻进业务明细把账算清楚。**
 
 ## 一键启动（Windows）
 
