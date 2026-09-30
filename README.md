@@ -4,7 +4,7 @@
 
 ![VisionInsight 主视觉](docs/screenshots/hero-visioninsight.jpg)
 
-远程仓库：[https://github.com/cody999110/vision-biz-dash](https://github.com/cody999110/vision-biz-dash)
+远程仓库：[https://github.com/cody999110/visioninsight](https://github.com/cody999110/visioninsight)
 
 ## 效果预览
 
